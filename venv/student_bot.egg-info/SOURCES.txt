@@ -1,0 +1,9 @@
+setup.py
+student_bot/__init__.py
+student_bot/enums.py
+student_bot/interfaces.py
+student_bot/models.py
+student_bot.egg-info/PKG-INFO
+student_bot.egg-info/SOURCES.txt
+student_bot.egg-info/dependency_links.txt
+student_bot.egg-info/top_level.txt
