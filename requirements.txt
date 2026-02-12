@@ -1,0 +1,29 @@
+# Core dependencies
+python-telegram-bot==20.7
+pydantic==2.5.3
+python-dotenv==1.2.1
+
+# Database
+pymongo==4.16.0
+motor==3.7.1
+
+# Google APIs
+google-api-python-client==2.108.0
+google-auth-httplib2==0.1.1
+google-auth-oauthlib==1.1.0
+google-auth==2.23.4
+
+# Async support
+aiohttp==3.9.1
+asyncio-mqtt==0.16.1
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3
+schedule==1.2.0
+
+# Development
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.11.0
+flake8==6.1.0
