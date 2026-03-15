@@ -5,8 +5,12 @@ from datetime import datetime, timedelta
 from ..models.task import Task, TaskStatus, TaskType, TaskPriority
 from ..models.user import User
 from ..models.repositories import ITaskRepository, IUserRepository
+from ..models.task_builder import TaskBuilder, TaskDirector
 
-logger = logging.getLogger(__name__)
+
+from ..utils.logger import LoggerSingleton
+
+logger = LoggerSingleton.get_instance()
 
 class CreateTaskUseCase:
 
@@ -24,14 +28,26 @@ class CreateTaskUseCase:
         tags: Optional[List[str]] = None
     ) -> Task:
         try:
-            task = Task(
+            from ..factories.task_factory import (
+                AssignmentTaskCreator, MeetingTaskCreator, 
+                ReminderTaskCreator, ProjectTaskCreator
+            )
+
+            creators = {
+                TaskType.ASSIGNMENT: AssignmentTaskCreator(),
+                TaskType.MEETING: MeetingTaskCreator(),
+                TaskType.REMINDER: ReminderTaskCreator(),
+                TaskType.PROJECT: ProjectTaskCreator()
+            }
+            creator = creators.get(task_type, AssignmentTaskCreator())
+            
+            task = creator.create_task(
                 user_id=user.id,
                 title=title,
                 description=description,
-                type=task_type,
                 priority=priority,
                 deadline=deadline,
-                tags=tags or []
+                tags=tags
             )
 
             self._validate_task(task)
@@ -45,6 +61,23 @@ class CreateTaskUseCase:
         except Exception as e:
             logger.error(f"❌ Failed to create task: {e}")
             raise
+
+    async def create_assignment(self, user: User, title: str, subject: str, deadline: datetime) -> Task:
+        director = TaskDirector(user.id)
+        task = director.build_assignment(title=title, subject=subject, priority=TaskPriority.URGENT, deadline=deadline)
+        self._validate_task(task)
+        task.id = await self._task_repository.create(task)
+        logger.info(f"✅ Created urgent assignment: {title} for user {user.id}")
+        return task
+
+    async def create_team_meeting(self, user: User, title: str, location: str, deadline: datetime) -> Task:
+        director = TaskDirector(user.id)
+        task = director.build_meeting(title=title, location=location, deadline=deadline)
+        self._validate_task(task)
+        task.id = await self._task_repository.create(task)
+        logger.info(f"✅ Created team meeting: {title} for user {user.id}")
+        return task
+
 
     def _validate_task(self, task: Task) -> None:
         if not task.title.strip():

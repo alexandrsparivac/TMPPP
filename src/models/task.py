@@ -2,6 +2,17 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from abc import ABC, abstractmethod
+import copy
+
+class ICloneable(ABC):
+    @abstractmethod
+    def clone(self) -> "ICloneable":
+        pass
+
+    @abstractmethod
+    def deep_clone(self) -> "ICloneable":
+        pass
 
 class TaskStatus(Enum):
     TODO = "todo"
@@ -33,7 +44,7 @@ class TaskMetadata:
     complexity_score: Optional[float] = None
 
 @dataclass
-class Task:
+class Task(ICloneable):
     id: Optional[str] = None
     user_id: str = ""
     title: str = ""
@@ -88,11 +99,35 @@ class Task:
             return False
         return datetime.utcnow() > self.deadline and self.status != TaskStatus.COMPLETED
 
-    def days_until_deadline(self) -> Optional[int]:
-        if not self.deadline:
-            return None
-        delta = self.deadline - datetime.utcnow()
-        return delta.days
+    def clone(self) -> "Task":
+        cloned = Task(
+            id=None,
+            user_id=self.user_id,
+            title=self.title,
+            description=self.description,
+            type=self.type,
+            status=TaskStatus.TODO,
+            priority=self.priority,
+            deadline=self.deadline,
+            tags=self.tags,
+            metadata=self.metadata,
+            dependencies=self.dependencies,
+            subtasks=self.subtasks,
+            calendar_event_id=self.calendar_event_id,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+            completed_at=None
+        )
+        return cloned
+
+    def deep_clone(self) -> "Task":
+        cloned = copy.deepcopy(self)
+        cloned.id = None
+        cloned.status = TaskStatus.TODO
+        cloned.created_at = datetime.utcnow()
+        cloned.updated_at = datetime.utcnow()
+        cloned.completed_at = None
+        return cloned
 
     def to_dict(self) -> Dict[str, Any]:
         return {

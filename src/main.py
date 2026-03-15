@@ -4,16 +4,13 @@ import os
 from dotenv import load_dotenv
 
 from .models.repositories import ITaskRepository, IUserRepository
-from .repositories.mongodb_task_repository import MongoTaskRepository
-from .repositories.mongodb_user_repository import MongoUserRepository
+from .factories.repository_factory import MongoRepositoryFactory
 from .handlers.task_handler import TaskHandler
 from .database.config import get_database, connect_to_mongo, disconnect_from_mongo
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+from .utils.logger import LoggerSingleton
+
+logger = LoggerSingleton.get_instance()
 
 class StudentLifeHelperBot:
 
@@ -32,8 +29,9 @@ class StudentLifeHelperBot:
 
             self.database = await get_database()
 
-            self.task_repository = MongoTaskRepository(self.database)
-            self.user_repository = MongoUserRepository(self.database)
+            repository_factory = MongoRepositoryFactory(self.database)
+            self.task_repository = repository_factory.create_task_repository()
+            self.user_repository = repository_factory.create_user_repository()
 
             self.task_handler = TaskHandler(
                 self.task_repository,
@@ -96,7 +94,7 @@ class StudentLifeHelperBot:
 
     async def shutdown(self) -> None:
         try:
-            await disconnect_from_mongo()
+            disconnect_from_mongo()
             logger.info("✅ Bot shutdown complete")
         except Exception as e:
             logger.error(f"❌ Error during shutdown: {e}")
