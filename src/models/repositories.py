@@ -46,9 +46,6 @@ class ITaskRepository(IRepository):
     async def search_tasks(self, user_id: str, search_term: str) -> List[Task]:
         pass
 
-    @abstractmethod
-    async def get_overdue_tasks(self, user_id: str) -> List[Task]:
-        pass
 
 class IUserRepository(IRepository):
 

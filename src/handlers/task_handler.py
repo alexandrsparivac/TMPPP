@@ -239,37 +239,6 @@ class TaskHandler:
         message = self._format_search_results(tasks, search_term)
         await update.message.reply_text(message)
 
-    async def handle_edit_task_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        try:
-            user = await self._get_user_from_update(update)
-            if not user:
-                return
-
-            command_text = update.message.text
-            parts = command_text.split(' ', 1)
-
-            if len(parts) < 2:
-                await update.message.reply_text(
-                    "❌ Please specify the task ID:\n"
-                    "`/edit_task <task_id>`\n\n"
-                    "💡 Use `/tasks` to see your task IDs."
-                )
-                return
-
-            task_id = parts[1].strip()
-            task = await self._task_repository.get_by_id(task_id)
-
-            if not task:
-                await update.message.reply_text(
-                    f"❌ Task with ID `{task_id}` not found.\n\n"
-                    f"💡 Use `/tasks` to see available tasks."
-                )
-                return
-
-            await self._show_task_edit_options(update, task)
-        except Exception as e:
-            logger.error(f"❌ Error in edit_task command: {e}")
-            await update.message.reply_text("❌ An error occurred while editing the task.")
 
     async def _show_task_edit_options(self, update: Update, task: Task) -> None:
         keyboard = [
@@ -297,26 +266,6 @@ class TaskHandler:
         task_info += "**Select what to edit:**"
         await update.message.reply_text(task_info, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    async def handle_edit_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        try:
-            user = await self._get_user_from_update(update)
-            if not user:
-                return
-
-            tasks = await self._get_tasks_use_case.execute(user)
-
-            if not tasks:
-                await update.message.reply_text("📝 No tasks to edit. Use /add_task to add one!")
-                return
-
-            keyboard = self._create_task_selection_keyboard(tasks)
-            await update.message.reply_text(
-                "✏️ **Select the task you want to edit:**",
-                reply_markup=keyboard
-            )
-        except Exception as e:
-            logger.error(f"❌ Error in edit command: {e}")
-            await update.message.reply_text("❌ An error occurred while loading tasks.")
 
     def _create_task_selection_keyboard(self, tasks: List[Task]) -> InlineKeyboardMarkup:
         keyboard = []

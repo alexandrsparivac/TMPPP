@@ -1,0 +1,28 @@
+services:
+  db:
+    image: mongo:latest
+    container_name: student_helper_db
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: student_helper_bot
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27018:27017"
+
+  bot:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: student_helper_bot
+    restart: always
+    environment:
+      - MONGODB_URI=mongodb://db:27017/student_helper_bot
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - DEBUG=True
+      - LOG_LEVEL=INFO
+    depends_on:
+      - db
+
+volumes:
+  mongo_data:

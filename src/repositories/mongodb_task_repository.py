@@ -140,21 +140,3 @@ class MongoTaskRepository(ITaskRepository):
             logger.error(f"❌ Failed to search tasks: {e}")
             raise
 
-    async def get_overdue_tasks(self, user_id: str) -> List[Task]:
-        try:
-            query = {
-                "user_id": user_id,
-                "deadline": {"$lt": datetime.utcnow()},
-                "status": {"$ne": TaskStatus.COMPLETED.value}
-            }
-            cursor = self._collection.find(query).sort("deadline", 1)
-            task_docs = await cursor.to_list(length=None)
-            tasks = []
-            for doc in task_docs:
-                doc["id"] = str(doc.pop("_id"))
-                tasks.append(Task.from_dict(doc))
-            logger.info(f"⚠️ Found {len(tasks)} overdue tasks for user {user_id}")
-            return tasks
-        except Exception as e:
-            logger.error(f"❌ Failed to get overdue tasks: {e}")
-            raise
