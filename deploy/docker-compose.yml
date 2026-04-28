@@ -20,6 +20,7 @@ services:
       - ../.env
     environment:
       - MONGODB_URI=mongodb://db:27017/student_helper_bot
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - DEBUG=True
       - LOG_LEVEL=INFO
     volumes:

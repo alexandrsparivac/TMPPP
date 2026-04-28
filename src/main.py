@@ -64,6 +64,8 @@ class StudentLifeHelperBot:
         application.add_handler(CallbackQueryHandler(self.task_handler.handle_callback_query))
         application.add_handler(MessageHandler((filters.TEXT | filters.PHOTO | filters.Document.ALL) & ~filters.COMMAND, self.task_handler.handle_message))
 
+        logger.info("🤖 Starting Student Life Helper Bot...")
+
         try:
             await application.initialize()
             await application.start()

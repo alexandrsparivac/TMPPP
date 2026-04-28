@@ -251,10 +251,10 @@ class TaskHandler:
                 InlineKeyboardButton("📄 Description", callback_data=f"editdesc_{task.id}")
             ],
             [
-                InlineKeyboardButton("� Attachments", callback_data=f"editfiles_{task.id}")
+                InlineKeyboardButton("📂 Attachments", callback_data=f"editfiles_{task.id}")
             ],
             [
-                InlineKeyboardButton("�🔥 Priority", callback_data=f"editpriority_{task.id}"),
+                InlineKeyboardButton("🔥 Priority", callback_data=f"editpriority_{task.id}"),
                 InlineKeyboardButton("❌ Cancel", callback_data=f"editcancel_{task.id}")
             ]
         ]
@@ -785,6 +785,7 @@ class TaskHandler:
                 await update.message.reply_text("❌ Task not found.")
                 return
 
+            message_text = update.message.text or "" # Prevent None pe mesaje de tip document
             message_text = update.message.text or "" # Prevent None pe mesaje de tip document
 
             if pending_action == 'set_deadline':
