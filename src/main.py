@@ -62,9 +62,7 @@ class StudentLifeHelperBot:
 
         from telegram.ext import MessageHandler, filters
         application.add_handler(CallbackQueryHandler(self.task_handler.handle_callback_query))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.task_handler.handle_message))
-
-        logger.info("🤖 Starting Student Life Helper Bot...")
+        application.add_handler(MessageHandler((filters.TEXT | filters.PHOTO | filters.Document.ALL) & ~filters.COMMAND, self.task_handler.handle_message))
 
         try:
             await application.initialize()

@@ -49,16 +49,6 @@ class User:
                 setattr(self.preferences, key, value)
         self.last_active = datetime.utcnow()
 
-    def enable_notifications(self) -> None:
-        self.preferences.notifications = NotificationPreference.ENABLED
-        self.last_active = datetime.utcnow()
-
-    def disable_notifications(self) -> None:
-        self.preferences.notifications = NotificationPreference.DISABLED
-        self.last_active = datetime.utcnow()
-
-    def notifications_enabled(self) -> bool:
-        return self.preferences.notifications == NotificationPreference.ENABLED
 
     def to_dict(self) -> Dict[str, Any]:
         return {

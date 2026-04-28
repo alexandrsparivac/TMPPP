@@ -239,37 +239,6 @@ class TaskHandler:
         message = self._format_search_results(tasks, search_term)
         await update.message.reply_text(message)
 
-    async def handle_edit_task_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        try:
-            user = await self._get_user_from_update(update)
-            if not user:
-                return
-
-            command_text = update.message.text
-            parts = command_text.split(' ', 1)
-
-            if len(parts) < 2:
-                await update.message.reply_text(
-                    "❌ Please specify the task ID:\n"
-                    "`/edit_task <task_id>`\n\n"
-                    "💡 Use `/tasks` to see your task IDs."
-                )
-                return
-
-            task_id = parts[1].strip()
-            task = await self._task_repository.get_by_id(task_id)
-
-            if not task:
-                await update.message.reply_text(
-                    f"❌ Task with ID `{task_id}` not found.\n\n"
-                    f"💡 Use `/tasks` to see available tasks."
-                )
-                return
-
-            await self._show_task_edit_options(update, task)
-        except Exception as e:
-            logger.error(f"❌ Error in edit_task command: {e}")
-            await update.message.reply_text("❌ An error occurred while editing the task.")
 
     async def _show_task_edit_options(self, update: Update, task: Task) -> None:
         keyboard = [
@@ -282,7 +251,10 @@ class TaskHandler:
                 InlineKeyboardButton("📄 Description", callback_data=f"editdesc_{task.id}")
             ],
             [
-                InlineKeyboardButton("🔥 Priority", callback_data=f"editpriority_{task.id}"),
+                InlineKeyboardButton("� Attachments", callback_data=f"editfiles_{task.id}")
+            ],
+            [
+                InlineKeyboardButton("�🔥 Priority", callback_data=f"editpriority_{task.id}"),
                 InlineKeyboardButton("❌ Cancel", callback_data=f"editcancel_{task.id}")
             ]
         ]
@@ -297,26 +269,6 @@ class TaskHandler:
         task_info += "**Select what to edit:**"
         await update.message.reply_text(task_info, reply_markup=InlineKeyboardMarkup(keyboard))
 
-    async def handle_edit_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        try:
-            user = await self._get_user_from_update(update)
-            if not user:
-                return
-
-            tasks = await self._get_tasks_use_case.execute(user)
-
-            if not tasks:
-                await update.message.reply_text("📝 No tasks to edit. Use /add_task to add one!")
-                return
-
-            keyboard = self._create_task_selection_keyboard(tasks)
-            await update.message.reply_text(
-                "✏️ **Select the task you want to edit:**",
-                reply_markup=keyboard
-            )
-        except Exception as e:
-            logger.error(f"❌ Error in edit command: {e}")
-            await update.message.reply_text("❌ An error occurred while loading tasks.")
 
     def _create_task_selection_keyboard(self, tasks: List[Task]) -> InlineKeyboardMarkup:
         keyboard = []
@@ -338,6 +290,9 @@ class TaskHandler:
                 [
                     InlineKeyboardButton("🏷️ Tags", callback_data=f"edittags_{task.id}"),
                     InlineKeyboardButton("📄 Description", callback_data=f"editdesc_{task.id}")
+                ],
+                [
+                    InlineKeyboardButton("📂 Attachments", callback_data=f"editfiles_{task.id}")
                 ],
                 [
                     InlineKeyboardButton("🔥 Priority", callback_data=f"editpriority_{task.id}"),
@@ -522,6 +477,8 @@ class TaskHandler:
                 await self._handle_edit_tags(query, task, user, context)
             elif action == "editdesc":
                 await self._handle_edit_description(query, task, user, context)
+            elif action == "editfiles":
+                await self._handle_edit_files(query, task, user, context)
             elif action == "editpriority":
                 await self._handle_edit_priority(query, task, user, context)
             elif action == "editcancel":
@@ -689,6 +646,40 @@ class TaskHandler:
             logger.error(f"❌ Error in edit tags: {e}")
             await query.edit_message_text("❌ An error occurred.")
 
+    async def _handle_edit_files(self, query, task: Task, user: User, context) -> None:
+        try:
+            context.user_data['pending_action'] = 'edit_files'
+            context.user_data['task_id'] = task.id
+            
+            # Formatam datele din Composite
+            attachments_info = "📂 Mărime totală: 0 bytes\n"
+            if hasattr(task, 'attachments_root') and task.attachments_root:
+                total_size = task.attachments_root.get_size()
+                attachments_info = f"📂 Mărime totală atașamente: {total_size} bytes\n\nStructură:\n"
+                
+                def get_tree_string(folder, indent=0) -> str:
+                    result = ""
+                    for child in folder.children:
+                        result += "  " * indent + "- " + child.get_name() + f" ({child.get_size()} b)\n"
+                        if child.__class__.__name__ == "FolderItem":
+                            result += get_tree_string(child, indent + 1)
+                    return result
+                    
+                tree_str = get_tree_string(task.attachments_root)
+                if not tree_str:
+                    tree_str = "  Niciun atașament adăugat.\n"
+                attachments_info += tree_str
+            
+            await query.edit_message_text(
+                f"📁 **Atașamente pentru:** {task.title}\n\n"
+                f"{attachments_info}\n"
+                f"Pentru a adăuga un fișier, pur și simplu *trimite o imagine sau un document* acum, sau revino la meniu.\n"
+                f"(Fișierele trimise vor ajunge momentan în root folder)"
+            )
+        except Exception as e:
+            logger.error(f"❌ Error in edit files: {e}")
+            await query.edit_message_text("❌ An error occurred.")
+
     async def _handle_edit_description(self, query, task: Task, user: User, context) -> None:
         try:
             context.user_data['pending_action'] = 'edit_description'
@@ -794,7 +785,7 @@ class TaskHandler:
                 await update.message.reply_text("❌ Task not found.")
                 return
 
-            message_text = update.message.text
+            message_text = update.message.text or "" # Prevent None pe mesaje de tip document
 
             if pending_action == 'set_deadline':
                 await self._process_set_deadline(update, task, message_text)
@@ -810,9 +801,13 @@ class TaskHandler:
                 await self._process_edit_tags(update, task, message_text)
             elif pending_action == 'edit_description':
                 await self._process_edit_description(update, task, message_text)
+            elif pending_action == 'edit_files':
+                await self._process_edit_files(update, task)
 
-            user_data.pop('pending_action', None)
-            user_data.pop('task_id', None)
+            # Doar stergem pending_action daca nu eram in edit files. Vrem sa lasam deschisa fereastra ca sa puna mai multe.
+            if pending_action != 'edit_files':
+                user_data.pop('pending_action', None)
+                user_data.pop('task_id', None)
         except Exception as e:
             logger.error(f"❌ Error handling message: {e}")
 
@@ -909,6 +904,54 @@ class TaskHandler:
         except Exception as e:
             logger.error(f"❌ Error editing tags: {e}")
             await update.message.reply_text("❌ An error occurred while editing tags.")
+
+    async def _process_edit_files(self, update, task: Task) -> None:
+        try:
+            message = update.message
+            file_name = f"unknown_{datetime.now().timestamp()}"
+            content = None
+            
+            # 1. Extragem datele din mesajul primite via Telegram API
+            if message.document:
+                file_name = message.document.file_name or file_name
+                file = await message.document.get_file()
+                content = await file.download_as_bytearray()
+            elif message.photo:
+                photo = message.photo[-1]  # cea mai mare calitatae
+                file_name = f"photo_{photo.file_unique_id}.jpg"
+                file = await photo.get_file()
+                content = await file.download_as_bytearray()
+            else:
+                if message.text:
+                    await update.message.reply_text("❌ Te rog trimite o imagine sau un document. Pentru a anula trimite un mesaj din meniul de jos.")
+                return
+
+            # 2. Importam Fatada si Adapterul nostru (Storage: LocalStorageAdapter)
+            from src.adapters.local_storage_adapter import LocalStorageAdapter
+            from src.facades.attachment_facade import TaskAttachmentFacade
+            
+            # Setam folderul de destinatie de pe disk (mapat din interiorul containerului)
+            storage = LocalStorageAdapter("/app/uploads")
+            facade = TaskAttachmentFacade(task_repo=self._task_repository, storage_adapter=storage)
+            
+            # 3. Executam FACADE pentru a salva elementele Composite pe server
+            result = facade.upload_file_to_task(
+                task_id=task.id,
+                file_name=file_name,
+                content=bytes(content),
+                folder_path="Uploads_Telegram"  # Toate se descarca intr-un sub-folder explicit creat
+            )
+            
+            # 4. Confirmam
+            await update.message.reply_text(
+                f"✅ Fișierul **{result['file_name']}** ({result['size']} bytes) a fost atașat cu succes la task în folderul: Uploads_Telegram!\n\n"
+                f"Mărime totală atașamente: {result['total_task_attachments_size']} bytes.\n\n"
+                f"📎 Trimite alt fișier sau folosește un buton din meniu."
+            )
+            
+        except Exception as e:
+            logger.error(f"❌ Error uploading file: {e}")
+            await update.message.reply_text("❌ A apărut o eroare la salvarea atașamentului. Fișierul poate fi prea mare.")
 
     async def _process_edit_description(self, update, task: Task, message_text: str) -> None:
         try:

@@ -33,6 +33,19 @@ src/
 
 ## Setup
 
-1. Copy `.env.example` to `.env` and set your `TELEGRAM_BOT_TOKEN` and `MONGODB_URI`
+### Local Setup
+1. Copy `.env` and set your `TELEGRAM_BOT_TOKEN` and `MONGODB_URI`
 2. Install dependencies: `pip install -r requirements.txt`
 3. Run: `python -m src.main`
+
+### Docker Setup
+1. Ensure you have Docker and Docker Compose installed.
+2. Set your `TELEGRAM_BOT_TOKEN` in your environment or a `.env` file.
+3. Run:
+   ```bash
+   docker compose -f deploy/docker-compose.yml up --build -d
+   ```
+4. Check logs:
+   ```bash
+   docker compose -f deploy/docker-compose.yml logs -f bot
+   ```

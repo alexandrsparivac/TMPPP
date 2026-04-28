@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from abc import ABC, abstractmethod
 import copy
+from src.models.attachment import FolderItem
 
 class ICloneable(ABC):
     @abstractmethod
@@ -61,12 +62,15 @@ class Task(ICloneable):
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
+    attachments_root: Optional[FolderItem] = field(default=None)
 
     def __post_init__(self):
         if not self.title:
             raise ValueError("Task title cannot be empty")
         if self.user_id and not isinstance(self.user_id, str):
             raise TypeError("User ID must be a string")
+        if self.attachments_root is None:
+            self.attachments_root = FolderItem("root")
 
     def update_status(self, new_status: TaskStatus) -> None:
         self.status = new_status
@@ -155,7 +159,8 @@ class Task(ICloneable):
             "calendar_event_id": self.calendar_event_id,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
-            "completed_at": self.completed_at
+            "completed_at": self.completed_at,
+            "attachments_root": self.attachments_root.to_dict() if self.attachments_root else None
         }
 
     @classmethod
@@ -188,7 +193,8 @@ class Task(ICloneable):
             calendar_event_id=data.get("calendar_event_id"),
             created_at=data.get("created_at", datetime.utcnow()),
             updated_at=data.get("updated_at", datetime.utcnow()),
-            completed_at=data.get("completed_at")
+            completed_at=data.get("completed_at"),
+            attachments_root=FolderItem.from_dict(data.get("attachments_root")) if data.get("attachments_root") else FolderItem("root")
         )
 
     def __str__(self) -> str:

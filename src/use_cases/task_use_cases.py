@@ -208,11 +208,3 @@ class GetTasksUseCase:
             logger.error(f"❌ Failed to search tasks: {e}")
             raise
 
-    async def get_overdue_tasks(self, user: User) -> List[Task]:
-        try:
-            tasks = await self._task_repository.get_overdue_tasks(user.id)
-            logger.info(f"⚠️ Found {len(tasks)} overdue tasks for user {user.id}")
-            return tasks
-        except Exception as e:
-            logger.error(f"❌ Failed to get overdue tasks: {e}")
-            raise
