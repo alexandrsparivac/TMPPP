@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from lab4.composite.task_attachment_tree import TaskAttachmentTree
+from labs.lab4.composite.task_attachment_tree import TaskAttachmentTree
 from src.adapters.storage_adapter import IStorageAdapter
 from src.models.task import Task
 

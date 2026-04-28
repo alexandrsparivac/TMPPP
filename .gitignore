@@ -2,3 +2,6 @@ __pycache__/
 *.py[cod]
 uploads/
 .env
+.DS_Store
+.pytest_cache/
+.venv/
