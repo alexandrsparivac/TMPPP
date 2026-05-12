@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Task icon">
+  <rect x="12" y="8" width="40" height="48" rx="8" fill="#edf7ff" stroke="#2563eb" stroke-width="4"/>
+  <path d="M24 22h18M24 34h18M24 46h10" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>
+  <path d="m18 23 3 3 6-8" fill="none" stroke="#16a34a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

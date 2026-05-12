@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Note icon">
+  <path d="M14 10h30l8 8v36H14z" fill="#fefce8" stroke="#a16207" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M44 10v10h10" fill="#fde68a" stroke="#a16207" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M24 30h18M24 40h18M24 50h10" stroke="#713f12" stroke-width="4" stroke-linecap="round"/>
+</svg>

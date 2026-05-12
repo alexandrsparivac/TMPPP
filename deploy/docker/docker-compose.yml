@@ -1,0 +1,32 @@
+services:
+  student-bot:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    container_name: student_life_helper_bot
+    restart: always
+    env_file:
+      - ../../.env
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DATABASE: student_life_helper
+      MONGODB_COLLECTION: users
+    depends_on:
+      - mongo
+    volumes:
+      - ../../runtime/logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mongo:
+    image: mongo:7
+    container_name: student_life_helper_mongo
+    restart: always
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
